@@ -1,0 +1,10 @@
+{
+  "name": "route-capture-kit",
+  "version": "1.0.0",
+  "description": "Playwright rīks screenshotu un video klipu automatizētai vākšanai no interaktīvām web lapām",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "playwright": "^1.62.1"
+  }
+}
