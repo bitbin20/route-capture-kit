@@ -1,8 +1,8 @@
-// Pilnais OSINT Framework maršruts (task-charter 2. punkts, 2026-08-06).
-// Atklāts izpētot manuāli: OpSec satur Persona Creation UN Anonymous Browsing
-// abus kā tiešus bērnus (nevis atsevišķi zari), TOR paplašinās vēl vienā solī
-// uz Tor Download / I2P Anonymous Network, saknes klikšķis atgriež pilnekrāna
-// centrēto skatu (labs noslēguma kadrs).
+// Full OSINT Framework route. Found by exploring manually: OpSec contains both
+// Persona Creation AND Anonymous Browsing as direct children (not separate
+// branches), TOR expands one more step into Tor Download / I2P Anonymous
+// Network, and clicking the root returns the full-screen centered view (a good
+// closing frame).
 
 export const route = [
   ["goto", "https://osint-framework.pages.dev/"],

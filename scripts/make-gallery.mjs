@@ -1,15 +1,15 @@
-// Uzbūvē HTML galeriju no jebkuras capture-runner.mjs izvades mapes —
-// screenshoti + video klipi secīgā, pārlūkojamā lapā, lai varētu ātri
-// vizuāli pārskatīt maršruta rezultātu, neejot pa vienam failam mapē.
+// Builds an HTML gallery from any capture-runner.mjs output folder —
+// screenshots + video clips on one sequential, browsable page, so you can
+// quickly review a route's result visually instead of opening files one by one.
 //
-// Lietošana: node scripts/make-gallery.mjs raw/osint-full-capture
+// Usage: node scripts/make-gallery.mjs raw/osint-full-capture
 
 import { readdirSync, readFileSync, writeFileSync, statSync } from "node:fs";
 import { join, extname, basename } from "node:path";
 
 const dirArg = process.argv[2];
 if (!dirArg) {
-  console.error("Lietošana: node scripts/make-gallery.mjs <capture-mape>");
+  console.error("Usage: node scripts/make-gallery.mjs <capture-folder>");
   process.exit(1);
 }
 
@@ -49,7 +49,7 @@ const cardsHtml = items
   )
   .join("\n");
 
-const html = `<title>${routeName} — priekšskatījums</title>
+const html = `<title>${routeName} — preview</title>
 <style>
   :root { --bg:#0a0d13; --surface:#12151f; --border:rgba(148,163,194,.14); --text:#e7ecf6; --muted:#8891a8; --cyan:#4eeaf0; }
   :root[data-theme="light"] { --bg:#f4f6fb; --surface:#fff; --border:rgba(30,41,59,.12); --text:#161b26; --muted:#5b6478; --cyan:#0891a3; }
@@ -64,7 +64,7 @@ const html = `<title>${routeName} — priekšskatījums</title>
   .card-label { font-size: 12px; color: var(--muted); margin: 0 0 8px; }
   .card-media { width: 100%; border-radius: 6px; display: block; }
 </style>
-<h1>${routeName} — ${items.length} faili</h1>
+<h1>${routeName} — ${items.length} files</h1>
 <div class="grid">
 ${cardsHtml}
 </div>
@@ -72,4 +72,4 @@ ${cardsHtml}
 
 const outPath = join(dirArg, "gallery.html");
 writeFileSync(outPath, html, "utf-8");
-console.log("Galerija saglabāta:", outPath);
+console.log("Gallery saved:", outPath);

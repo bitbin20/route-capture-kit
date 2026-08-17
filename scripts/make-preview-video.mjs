@@ -1,11 +1,11 @@
-// Saliek jau uzņemtos resursus (screenshoti + video klipi no vienas vai
-// vairākām capture-runner.mjs izvades mapēm) vienā rupjā priekšskatījuma
-// video — lai maršrutu var noskatīties kā video, nevis pārlūkot kā lapu.
-// NAV gala montāža (tā paliek Remotion/CapCut ziņā) — tikai ātrs "vai stāsts
-// plūst" pārbaudījums bez manuālas salikšanas.
+// Stitches already-captured assets (screenshots + video clips from one or more
+// capture-runner.mjs output folders) into one rough preview video — so a route
+// can be watched as a video instead of browsed as a page. This is NOT the final
+// cut (that stays with Remotion/CapCut) — just a fast "does the story flow"
+// check without manual assembly.
 //
-// Lietošana: node scripts/make-preview-video.mjs raw/osint-intro-video-capture raw/osint-full-capture
-// (mapes tiek saliktas tieši tādā secībā, kādā tās nosauktas)
+// Usage: node scripts/make-preview-video.mjs raw/osint-intro-video-capture raw/osint-full-capture
+// (folders are stitched in exactly the order they are named)
 
 import { readdirSync, statSync, mkdirSync, writeFileSync } from "node:fs";
 import { join, extname, basename } from "node:path";
@@ -13,7 +13,7 @@ import { execFileSync } from "node:child_process";
 
 const dirArgs = process.argv.slice(2);
 if (dirArgs.length === 0) {
-  console.error("Lietošana: node scripts/make-preview-video.mjs <mape1> [mape2 ...]");
+  console.error("Usage: node scripts/make-preview-video.mjs <folder1> [folder2 ...]");
   process.exit(1);
 }
 
@@ -57,12 +57,12 @@ for (const dir of dirArgs) {
       ]);
     }
     segmentPaths.push(segPath);
-    console.log("Segments gatavs:", basename(segPath), "no", f);
+    console.log("Segment ready:", basename(segPath), "from", f);
   }
 }
 
 if (segmentPaths.length === 0) {
-  console.error("Nav atrasts neviens attēls/video norādītajās mapēs.");
+  console.error("No image/video found in the given folders.");
   process.exit(1);
 }
 
@@ -74,4 +74,4 @@ const outPath = join(process.cwd(), "raw", `preview-${outName}.mp4`);
 
 execFileSync("ffmpeg", ["-y", "-f", "concat", "-safe", "0", "-i", listPath, "-c", "copy", outPath]);
 
-console.log("Priekšskatījuma video gatavs:", outPath);
+console.log("Preview video ready:", outPath);

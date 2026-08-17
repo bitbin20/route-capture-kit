@@ -1,7 +1,7 @@
-// Pirmais maršruta piemērs universālajam dzinējam (capture-runner.mjs).
-// Taimingi kalibrēti empīriski 2026-08-06 — sk. task-charter checkpointu:
-// ielādes ekrāns NAV laika ziņā ierobežots, tas ir "klikšķini, lai ieietu"
-// vārti, pāreja pēc klikšķa nostājas ~2.8s.
+// First route example for the generic engine (capture-runner.mjs).
+// Timings calibrated empirically 2026-08-06: the loading screen is NOT
+// time-bounded — it's a "click to enter" gate; the transition settles ~2.8s
+// after the click.
 
 export const route = [
   ["goto", "https://osint-framework.pages.dev/"],

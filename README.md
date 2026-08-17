@@ -1,74 +1,100 @@
 # route-capture-kit
 
-Automatizē ekrānuzņēmumu un video klipu vākšanu no interaktīvām web lapām
-(node-graph kartes, SVG/DOM ceļa navigācijas), lai video montāžai nevajadzētu
-manuāli ierakstīt ekrānu un pēc tam griezt/labot DTS anomālijas. Dzinējs ir
-vispārīgs — katrai jaunai lapai vajag tikai jaunu maršruta failu, ne jaunu kodu.
+Automate the collection of **screenshots and short video clips from interactive
+web pages** (node-graph maps, SVG/DOM navigation trees), so a video editor never
+has to manually screen-record and then trim timing glitches afterwards.
 
-## Kāpēc šis rīks
+One generic engine drives everything — each new page needs only a small **route
+file**, not new code.
 
-Manuāls ekrāna ieraksts (Win+Alt+R / Game Bar / Recordly) katram video prasa
-cilvēku, kas fiziski klikšķina pareizajā secībā, un rezultātā bieži nāk ar
-DTS laika zīmogu anomālijām, kas prasa papildu griešanu pēcapstrādē.
-Playwright var atvērt lapu, izpildīt to pašu klikšķu secību precīzi un
-atkārtoti, un ierakstīt video natīvi (nevis caur ekrāna tveršanas draiveri) —
-tas novērš abas problēmas vienlaicīgi.
+> **What this is:** a *capture-to-montage* helper. It gathers raw material
+> (screenshots, native browser video, a rough preview reel) to feed a real video
+> editor (Remotion, CapCut, Premiere).
+> **What this is not:** a final video editor, a visual-regression testing suite,
+> or a general-purpose scraping framework. It deliberately stops at "rough
+> preview" and hands off to your montage tool.
 
-## Piemērs
+## Why this exists
 
-Reāls, publicēts rezultāts (OSINT Framework maršruts, 8 soļi, screenshoti +
-ielādes video klips): [priekšskatījuma galerija](https://claude.ai/code/artifact/0f363352-5be7-4301-90d3-3dfbc725db56)
+Manually screen-recording every explainer video (Win+Alt+R / Game Bar / OBS)
+needs a human clicking in the right order, and the output often carries DTS
+timestamp anomalies that require extra trimming in post.
 
-Šī konkrētā galerija bija vienreizējs izstrādes laika skripts. Repo iekļautais
-`make-gallery.mjs` ir tā pati ideja kā atkārtoti lietojama komanda — der
-jebkurai `capture-runner.mjs` izvades mapei, ne tikai šim vienam gadījumam.
+Playwright can open the page, replay the exact click sequence precisely and
+repeatably, and record video **natively** (not through a screen-capture driver)
+— which removes both problems at once. This kit wraps that into a tiny,
+route-driven workflow aimed specifically at feeding a montage pipeline.
 
-## Prasības
+## How this differs from shot-scraper (and friends)
 
-- Node.js (jebkura nesenā LTS versija)
-- [Playwright](https://playwright.dev) `^1.62` (`npm install`, tad `npx playwright install chromium`)
-- `ffmpeg` pieejams `PATH` (video konvertācijai un priekšskatījuma video salikšanai)
+[shot-scraper](https://github.com/simonw/shot-scraper) is the mature, excellent
+tool in this space — if you want documentation screenshots, visual regression,
+or JS scraping, use it. It overlaps with the *capture* half of this kit and does
+it more thoroughly.
 
-## Uzstādīšana
+route-capture-kit is narrower on purpose. Its point is the **montage-facing
+pipeline** that shot-scraper doesn't cover:
+
+| | route-capture-kit | shot-scraper |
+|---|---|---|
+| Primary goal | Feed a **video montage** (rough preview reel) | Documentation, regression, scraping |
+| `make-gallery` | Yes — quick visual review of a capture run | No |
+| `make-preview-video` | Yes — assembles a rough reel to check story flow | No |
+| `check-compat` | Yes — canvas vs SVG/DOM diagnosis before writing a route | No |
+| Route format | Tiny JS step vocabulary (`goto/click/clickxy/wait/shot/clicktab`) | YAML multi-step |
+| Language / runtime | Node.js | Python |
+| Maturity | Small personal tool | Mature, widely used |
+
+If you don't need the gallery / preview-reel / compat steps, shot-scraper is
+probably the better choice. This kit is for the specific case where captures are
+raw material for a short video.
+
+## Requirements
+
+- Node.js (any recent LTS)
+- [Playwright](https://playwright.dev) `^1.62` (`npm install`, then `npx playwright install chromium`)
+- `ffmpeg` on your `PATH` (for video conversion and preview-reel assembly)
+
+## Install
 
 ```bash
-git clone <šis-repo>
+git clone https://github.com/bitbin20/route-capture-kit.git
 cd route-capture-kit
 npm install
 npx playwright install chromium
 ```
 
-Pārbaudi, ka `ffmpeg` ir pieejams:
+Check that `ffmpeg` is available:
 
 ```bash
 ffmpeg -version
 ```
 
-## Ātrais starts
+## Quick start
 
 ```bash
-# 1. Pārbaudi, vai jaunā lapa vispār der šim rīkam
+# 1. Check whether a new page is even a good fit for this tool
 node scripts/check-compat.mjs https://example.com
 
-# 2. Uzņem screenshotus pēc gatava maršruta (iekļauti 3 piemēri scripts/routes/)
+# 2. Capture screenshots from a ready route (3 examples in scripts/routes/)
 node scripts/capture-runner.mjs scripts/routes/osint-full.mjs
 
-# 3. Pārskati rezultātu kā lapu
+# 3. Review the result as a page
 node scripts/make-gallery.mjs raw/osint-full-capture
 
-# 4. Vai salikt rupju priekšskatījuma video no vairākām capture mapēm
+# 4. Or assemble a rough preview video from one or more capture folders
 node scripts/make-preview-video.mjs raw/osint-intro-video-capture raw/osint-full-capture
 ```
 
-## Rīki
+## Tools
 
 ### `check-compat.mjs <url>`
 
-Ātrā savietojamības pārbaude PIRMS jauna maršruta rakstīšanas. Atbild uz
-jautājumu: vai elementi ir teksta-adresējami (SVG/DOM, `click` darbība
-strādās), vai lapa ir canvas/WebGL zīmējums (tad vajadzēs koordinātu
-klikšķus vai cita pieeja pavisam). Izvada JSON ar mezglu skaitiem, verdiktu
-un screenshotu (`raw/compat-checks/screenshot.png`).
+Quick compatibility check **before** writing a new route. Answers: are the
+elements text-addressable (SVG/DOM, so `click` will work), or is the page a
+canvas/WebGL drawing (you'll need coordinate clicks, or a different approach
+entirely)? Prints JSON with node counts, a verdict, and a screenshot
+(`raw/compat-checks/screenshot.png`).
 
 ```bash
 node scripts/check-compat.mjs https://osint-framework.pages.dev/
@@ -76,85 +102,83 @@ node scripts/check-compat.mjs https://osint-framework.pages.dev/
 
 ### `capture-runner.mjs <route.mjs> [--video]`
 
-Universālais dzinējs. Izpilda maršruta faila soļu sarakstu secīgi. Bez
-`--video` karoga saglabā screenshotus mapē `raw/<route-nosaukums>-capture/`.
-Ar `--video` ieraksta VISU maršrutu no sākuma līdz beigām kā vienu
-`.webm`/`.mp4` klipu (Playwright natīvais video ieraksts, nevis ekrāna
-tveršana — bez DTS anomālijām). Playwright neatbalsta patvaļīgu "sāc/beidz
-ierakstu vidū", tāpēc video maršrutam jābūt savam, īsam, atsevišķam route
-failam (tikai tā daļa, kur reāli kaut kas kustas).
+The generic engine. Runs a route file's step list in order. Without `--video`
+it saves screenshots to `raw/<route-name>-capture/`. With `--video` it records
+the **whole** route start-to-finish as one `.webm`/`.mp4` clip (Playwright
+native video recording, not screen capture — no DTS anomalies). Playwright does
+not support arbitrary "start/stop recording mid-run", so a video route should be
+its own short, separate route file (only the part where something actually
+moves).
 
-**Soļu vārdnīca** (route faila `route` masīvā):
+**Step vocabulary** (the `route` array in a route file):
 
-| Solis | Darbība |
+| Step | Action |
 |---|---|
-| `["goto", url]` | Atver lapu |
-| `["click", "teksts"]` | Klikšķina uz elementa ar šo tekstu (SVG/DOM, nav precīza sakritība) |
-| `["clickxy", x, y]` | Klikšķina uz pikseļa koordinātas (canvas lapām, kur teksta klikšķi nestrādā) |
-| `["wait", ms]` | Gaida fiksētu laiku |
-| `["shot", "nosaukums"]` | Saglabā screenshotu ar šo nosaukumu |
-| `["clicktab", "teksts", "nosaukums"]` | Klikšķina uz elementa, kas atver JAUNU cilni (ārējs links); uzņem screenshotu no jaunās cilnes, aizver to, atgriežas pie galvenās lapas |
+| `["goto", url]` | Open the page |
+| `["click", "text"]` | Click the element containing this text (SVG/DOM, not exact match) |
+| `["clickxy", x, y]` | Click a pixel coordinate (for canvas pages where text clicks fail) |
+| `["wait", ms]` | Wait a fixed time |
+| `["shot", "name"]` | Save a screenshot with this name |
+| `["clicktab", "text", "name"]` | Click an element that opens a NEW tab (external link); screenshot the new tab, close it, return to the main page |
 
-Ja solis neizdodas, kļūdas ziņojumā redzams soļa numurs un pats solis
-(`Solis 5/8 neizdevās — ["click","OpSec"] ...`), lai nav jāmin, kurā vietā
-maršruts salūza.
+If a step fails, the error shows the step number and the step itself (`Step 5/8
+failed — ["click","OpSec"] ...`), so you don't have to guess where the route
+broke.
 
-### `make-gallery.mjs <capture-mape>`
+### `make-gallery.mjs <capture-folder>`
 
-Uzbūvē pārlūkojamu HTML galeriju (`gallery.html` tajā pašā mapē) no
-jebkuras `capture-runner.mjs` izvades — visi screenshoti un video klipi
-secīgi, ar numuriem un failu nosaukumiem.
+Builds a browsable HTML gallery (`gallery.html` in the same folder) from any
+`capture-runner.mjs` output — all screenshots and video clips in order, numbered
+and labelled.
 
-### `make-preview-video.mjs <mape1> [mape2 ...]`
+### `make-preview-video.mjs <folder1> [folder2 ...]`
 
-Saliek jau uzņemtos resursus (screenshoti + video klipi) vienā rupjā
-priekšskatījuma video, mapju secībā, kāda dota komandrindā. Attēli tiek
-rādīti pa 1.5s katrs. **Šis NAV gala montāža** — tikai ātrs "vai stāsts
-plūst" pārbaudījums bez manuālas salikšanas Remotion/CapCut vai citā
-montāžas rīkā. Rezultāts: `raw/preview-<mapes>.mp4`.
+Stitches already-captured assets (screenshots + video clips) into one rough
+preview video, in the folder order given on the command line. Images show for
+1.5s each. **This is not the final cut** — just a fast "does the story flow"
+check before you assemble it properly in Remotion/CapCut. Output:
+`raw/preview-<folders>.mp4`.
 
-## Kā uzrakstīt jaunu maršrutu
+## Writing a new route
 
-1. `node scripts/check-compat.mjs <url>` — pārliecinies, ka lapa der.
-2. Izpēti lapu manuāli, atrodi precīzus tekstus/pogas, kas jāklikšķina, un secību.
-3. Uzraksti `scripts/routes/<nosaukums>.mjs`:
+1. `node scripts/check-compat.mjs <url>` — confirm the page is a fit.
+2. Explore the page manually; find the exact texts/buttons to click and the order.
+3. Write `scripts/routes/<name>.mjs`:
    ```js
    export const route = [
-     ["goto", "https://piemers.lv"],
+     ["goto", "https://example.com"],
      ["wait", 1000],
-     ["click", "Kaut kas"],
+     ["click", "Something"],
      ["wait", 800],
-     ["shot", "01-rezultats"],
+     ["shot", "01-result"],
    ];
    ```
-4. `node scripts/capture-runner.mjs scripts/routes/<nosaukums>.mjs`
+4. `node scripts/capture-runner.mjs scripts/routes/<name>.mjs`
 
-Taimingi (`wait` vērtības) jākalibrē empīriski katrai lapai — daudzas lapas
-(piem. "klikšķini, lai ieietu" ielādes ekrāni) NAV laika ziņā ierobežotas,
-tās gaida īstu klikšķi, nevis pati pazūd pēc X sekundēm.
+Timings (`wait` values) have to be calibrated empirically per page — many pages
+(e.g. "click to enter" loading screens) are *not* time-bounded; they wait for a
+real click rather than disappearing after X seconds.
 
-## Zināmie ierobežojumi
+## Known limitations
 
-- **`clickxy` nav pierādīts praksē.** Vārdnīcā ir, bet visas līdzšinējās
-  lapas bijušas teksta-adresējamas (SVG/DOM), tāpēc canvas-tipa lapa vēl
-  nav testēta reāli.
-- **Nav automātiskas atkārtošanas/retry loģikas.** Ja solis neizdodas
-  (piem. lēns tīkls), skripts vienkārši krīt ar kļūdu. Apzināta izvēle —
-  retry loģika pievieno sarežģītību, kas šim rīkam (personiska lietošana,
-  ne CI) nav vajadzīga.
-- **`check-compat.mjs` heiristika ir rupja** (canvas vs SVG teksta mezglu
-  skaits). Pareizi diagnosticēja vienīgo līdz šim testēto gadījumu, bet nav
-  pārbaudīta pret plašu lapu klāstu.
-- **Taimingi ir cietkodēti sekundēs**, ne notikumu-balstīti (izņemot
-  `clicktab`, kas gaida reālu `page` notikumu). Dažām lapām CSS
-  opacity-fade animācijas nesignalizē "pabeigts" Playwright `waitFor`
-  pārbaudei — tāpēc `wait` ar empīriski nomērītu laiku ir vienkāršākais
-  uzticamais risinājums.
-- **Noklusējuma viewport (1920×1152)** izvēlēts, lai sakristu ar konkrētu
-  lejupējo Remotion video projektu. Der mainīt `VIEWPORT` konstanti
-  `capture-runner.mjs` un `check-compat.mjs`, ja vajag citu izšķirtspēju.
+- **`clickxy` is unproven in practice.** It's in the vocabulary, but every page
+  tried so far has been text-addressable (SVG/DOM), so a canvas-type page hasn't
+  been tested for real yet.
+- **No automatic retry logic.** If a step fails (e.g. slow network) the script
+  just exits with an error. Deliberate choice — retry logic adds complexity this
+  tool (personal use, not CI) doesn't need.
+- **`check-compat.mjs` heuristics are coarse** (canvas vs SVG text-node counts).
+  It correctly diagnosed the only case tested so far, but hasn't been validated
+  against a wide range of pages.
+- **Timings are hard-coded in seconds**, not event-based (except `clicktab`,
+  which waits on a real `page` event). Some pages' CSS opacity-fade animations
+  don't signal "done" to Playwright's `waitFor`, so an empirically measured
+  `wait` is the simplest reliable option.
+- **Default viewport (1920×1152)** was chosen to match a specific downstream
+  Remotion project. Change the `VIEWPORT` constant in `capture-runner.mjs` and
+  `check-compat.mjs` if you need a different resolution.
 
-## Mapju struktūra
+## Project structure
 
 ```
 scripts/
@@ -163,16 +187,15 @@ scripts/
   make-gallery.mjs
   make-preview-video.mjs
   routes/
-    osint-framework.mjs   # screenshotu maršruts (piemērs)
-    osint-full.mjs        # pilns maršruts ar clicktab soļiem (piemērs)
-    osint-intro-video.mjs # video maršruts (piemērs)
+    osint-framework.mjs   # screenshot route (example)
+    osint-full.mjs        # full route with clicktab steps (example)
+    osint-intro-video.mjs # video route (example)
 raw/
-  <route>-capture/        # capture-runner.mjs izvade (git ignorēts)
-  compat-checks/          # check-compat.mjs izvade (git ignorēts)
-  preview-<...>.mp4       # make-preview-video.mjs izvade (git ignorēts)
+  <route>-capture/        # capture-runner.mjs output (git-ignored)
+  compat-checks/          # check-compat.mjs output (git-ignored)
+  preview-<...>.mp4       # make-preview-video.mjs output (git-ignored)
 ```
 
-## Licence
+## License
 
-Nav norādīta — privāts rīks. Ja plāno padarīt publisku, pievieno MIT vai
-citu licenci pēc izvēles.
+[MIT](LICENSE).

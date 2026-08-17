@@ -1,6 +1,6 @@
-// Video maršruts (nevis screenshoti) — tikai ielādes animācijai un pārejai,
-// jo tas ir vienīgais patiešām kustīgais brīdis šajā lapā, kur video izskatās
-// labāk par statisku PNG. Palaist ar --video karogu.
+// Video route (not screenshots) — only the loading animation and transition,
+// since that's the one genuinely moving moment on this page where video looks
+// better than a static PNG. Run with the --video flag.
 
 export const route = [
   ["goto", "https://osint-framework.pages.dev/"],

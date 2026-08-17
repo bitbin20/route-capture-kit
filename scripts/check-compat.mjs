@@ -1,9 +1,9 @@
-// Ātrā savietojamības pārbaude PIRMS jauna maršruta rakstīšanas jaunai lapai.
-// Jautājums, uz ko tā atbild: vai elementi ir teksta-adresējami (SVG/DOM),
-// vai tikai canvas/WebGL zīmējums (tad clickText() nestrādās, vajadzēs
-// koordinātu klikšķus vai cita pieeja pavisam).
+// Quick compatibility check BEFORE writing a new route for a new page.
+// The question it answers: are the elements text-addressable (SVG/DOM), or is
+// the page just a canvas/WebGL drawing (in which case clickText() won't work
+// and you'll need coordinate clicks, or a different approach entirely)?
 //
-// Lietošana: node scripts/check-compat.mjs <url>
+// Usage: node scripts/check-compat.mjs <url>
 
 import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
@@ -14,7 +14,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const url = process.argv[2];
 
 if (!url) {
-  console.error("Lietošana: node scripts/check-compat.mjs <url>");
+  console.error("Usage: node scripts/check-compat.mjs <url>");
   process.exit(1);
 }
 
@@ -25,7 +25,7 @@ async function main() {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1920, height: 1152 } });
   await page.goto(url, { waitUntil: "domcontentloaded" });
-  await page.waitForTimeout(2500); // dod laiku sākotnējām animācijām nostāties
+  await page.waitForTimeout(2500); // give initial animations time to settle
 
   const info = await page.evaluate(() => {
     return {
@@ -47,15 +47,15 @@ async function main() {
   let verdict;
   if (info.canvases > 0 && info.svgTextNodes === 0 && info.clickableElements < 3) {
     verdict =
-      "⚠️ Iespējams tikai canvas/WebGL — teksta klikšķi (clickText) nestrādās. Vajadzēs koordinātu klikšķus (clickXY) vai citu pieeju.";
+      "⚠️  Likely canvas/WebGL only — text clicks (clickText) won't work. You'll need coordinate clicks (clickXY) or a different approach.";
   } else if (info.svgTextNodes > 0 || info.clickableElements >= 3) {
-    verdict = "✅ Der teksta-balstītiem klikšķiem (SVG/DOM elementi atrasti).";
+    verdict = "✅  Fits text-based clicks (SVG/DOM elements found).";
   } else {
-    verdict = "❓ Neskaidrs no datiem vien — apskaties screenshot.png un izlem vizuāli.";
+    verdict = "❓  Unclear from the data alone — look at screenshot.png and decide visually.";
   }
 
   console.log("\n" + verdict);
-  console.log("Screenshot saglabāts:", shotPath);
+  console.log("Screenshot saved:", shotPath);
 }
 
 main().catch((err) => {

@@ -1,27 +1,27 @@
-// Universāls dzinējs: izpilda maršruta failu (skat. routes/*.mjs).
-// Viens dzinējs der jebkurai lapai — katrai jaunai lapai vajag tikai jaunu
-// maršruta failu ar soļu sarakstu, ne jaunu programmu.
+// Generic engine: runs a route file (see routes/*.mjs).
+// One engine drives any page — each new page needs only a new route file with a
+// step list, not a new program.
 //
-// Soļu vārdnīca (apzināti maza, lai nesarežģītu):
-//   ["goto", url]                — atver lapu
-//   ["click", "teksts"]          — klikšķina uz elementa ar šo tekstu (SVG/DOM)
-//   ["clickxy", x, y]            — klikšķina uz pikseļa koordinātas (canvas lapām)
-//   ["wait", ms]                 — gaida fiksētu laiku
-//   ["shot", "nosaukums"]        — saglabā screenshotu
-//   ["clicktab", "teksts", "nosaukums"] — klikšķina uz elementa, kas atver JAUNU
-//                                   cilni (piem. ārējs rīka links); uzņem screenshotu
-//                                   no tās jaunās cilnes, aizver to, atgriežas pie
-//                                   galvenās lapas nākamajam solim
+// Step vocabulary (deliberately small, to keep things simple):
+//   ["goto", url]                — open the page
+//   ["click", "text"]            — click the element containing this text (SVG/DOM)
+//   ["clickxy", x, y]            — click a pixel coordinate (for canvas pages)
+//   ["wait", ms]                 — wait a fixed time
+//   ["shot", "name"]             — save a screenshot
+//   ["clicktab", "text", "name"] — click an element that opens a NEW tab (e.g. an
+//                                   external tool link); screenshot the new tab,
+//                                   close it, return to the main page for the
+//                                   next step
 //
-// Lietošana (screenshoti):  node scripts/capture-runner.mjs routes/osint-framework.mjs
-// Lietošana (video klips):  node scripts/capture-runner.mjs routes/osint-intro-video.mjs --video
+// Usage (screenshots):  node scripts/capture-runner.mjs scripts/routes/osint-framework.mjs
+// Usage (video clip):   node scripts/capture-runner.mjs scripts/routes/osint-intro-video.mjs --video
 //
-// Video režīms ieraksta VISU maršrutu no sākuma līdz beigām kā vienu .webm/.mp4
-// klipu (Playwright natīvais video ieraksts, ne ekrāna tveršana — nav DTS
-// anomāliju, ar ko cīnījāmies iepriekš). Playwright neatbalsta patvaļīgu
-// "sāc/beidz ierakstu vidū" — tāpēc video maršrutam jābūt savam, īsam,
-// atsevišķam route failam (parasti tikai tā daļa, kur reāli kaut kas kustas,
-// piem. ielādes animācija), ne visam garajam maršrutam uzreiz.
+// Video mode records the WHOLE route start-to-finish as one .webm/.mp4 clip
+// (Playwright native video recording, not screen capture — no DTS anomalies).
+// Playwright does not support arbitrary "start/stop recording mid-run", so a
+// video route should be its own short, separate route file (usually just the
+// part where something actually moves, e.g. a loading animation), not the whole
+// long route at once.
 
 import { chromium } from "playwright";
 import { mkdirSync, renameSync } from "node:fs";
@@ -36,7 +36,7 @@ const routeArg = process.argv[2];
 const wantsVideo = process.argv.includes("--video");
 
 if (!routeArg) {
-  console.error("Lietošana: node scripts/capture-runner.mjs routes/<fails>.mjs [--video]");
+  console.error("Usage: node scripts/capture-runner.mjs routes/<file>.mjs [--video]");
   process.exit(1);
 }
 
@@ -90,28 +90,28 @@ async function main() {
             }
             await popup.close();
           } else {
-            console.warn(`clicktab: "${triggerText}" neatvēra jaunu cilni (turpinu bez screenshota)`);
+            console.warn(`clicktab: "${triggerText}" did not open a new tab (continuing without a screenshot)`);
           }
           break;
         }
         default:
-          throw new Error(`nezināma darbība "${action}"`);
+          throw new Error(`unknown action "${action}"`);
       }
     } catch (err) {
       throw new Error(
-        `Solis ${i + 1}/${steps.length} neizdevās — ${JSON.stringify(steps[i])}\n  ${err.message}`
+        `Step ${i + 1}/${steps.length} failed — ${JSON.stringify(steps[i])}\n  ${err.message}`
       );
     }
   }
 
-  await context.close(); // pabeidz video failu (ja recordVideo aktīvs)
+  await context.close(); // finalizes the video file (if recordVideo is active)
   await browser.close();
 
   if (wantsVideo) {
     const rawVideoPath = await page.video().path();
     const webmDest = join(outDir, `${routeName}.webm`);
     renameSync(rawVideoPath, webmDest);
-    console.log("Video (.webm) saglabāts:", webmDest);
+    console.log("Video (.webm) saved:", webmDest);
 
     const mp4Dest = join(outDir, `${routeName}.mp4`);
     try {
@@ -122,13 +122,13 @@ async function main() {
         "-pix_fmt", "yuv420p",
         mp4Dest,
       ]);
-      console.log("Video (.mp4) konvertēts:", mp4Dest);
+      console.log("Video (.mp4) converted:", mp4Dest);
     } catch (err) {
-      console.warn("ffmpeg konvertācija neizdevās (webm fails tik un tā saglabāts):", err.message);
+      console.warn("ffmpeg conversion failed (the .webm file was still saved):", err.message);
     }
   }
 
-  console.log("Gatavs:", outDir);
+  console.log("Done:", outDir);
 }
 
 main().catch((err) => {

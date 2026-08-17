@@ -1,9 +1,38 @@
 {
   "name": "route-capture-kit",
   "version": "1.0.0",
-  "description": "Playwright rīks screenshotu un video klipu automatizētai vākšanai no interaktīvām web lapām",
-  "private": true,
+  "description": "Route-driven Playwright kit that captures screenshots and native video clips from interactive web pages to feed a video-montage pipeline",
   "type": "module",
+  "license": "MIT",
+  "author": "M.B.",
+  "homepage": "https://github.com/bitbin20/route-capture-kit#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bitbin20/route-capture-kit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bitbin20/route-capture-kit/issues"
+  },
+  "keywords": [
+    "playwright",
+    "screenshot",
+    "screenshots",
+    "video",
+    "capture",
+    "automation",
+    "web-scraping",
+    "remotion",
+    "video-editing",
+    "montage",
+    "svg",
+    "cli"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "check": "node --check scripts/capture-runner.mjs && node --check scripts/check-compat.mjs && node --check scripts/make-gallery.mjs && node --check scripts/make-preview-video.mjs"
+  },
   "devDependencies": {
     "playwright": "^1.62.1"
   }
