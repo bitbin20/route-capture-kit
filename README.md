@@ -196,6 +196,18 @@ raw/
   preview-<...>.mp4       # make-preview-video.mjs output (git-ignored)
 ```
 
+## Author's note
+
+I built this for my own short-video workflow while producing AI explainer
+content in Latvian. It is intentionally small: I'd rather have simple,
+reference-driven tools I can point at a task and let the model do the rest, than
+one big "automate everything" system. Sharing the steps, not just the result.
+
+*Latviski: šo rīku uztaisīju savai īso video darbplūsmai, veidojot AI
+skaidrojošo saturu latviski. Apzināti mazs, bez overengineering — labāk
+vienkārši, references vadīti rīki, kuriem viegli norādīt vajadzīgo maršrutu,
+nekā viena liela "izdari visu" automatizācija.*
+
 ## License
 
 [MIT](LICENSE).

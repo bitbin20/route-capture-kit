@@ -4,7 +4,7 @@
   "description": "Route-driven Playwright kit that captures screenshots and native video clips from interactive web pages to feed a video-montage pipeline",
   "type": "module",
   "license": "MIT",
-  "author": "M.B.",
+  "author": "bitbin20",
   "homepage": "https://github.com/bitbin20/route-capture-kit#readme",
   "repository": {
     "type": "git",
